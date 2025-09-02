@@ -1,7 +1,7 @@
-import { GitHubDashboard } from "@/components/GitHubDashboard";
+import { ReleasesDashboard } from "@/components/ReleasesDashboard";
 
 const Index = () => {
-  return <GitHubDashboard />;
+  return <ReleasesDashboard />;
 };
 
 export default Index;

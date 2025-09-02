@@ -1,0 +1,44 @@
+[
+  {
+    "branch": "main",
+    "title": "v2.1.0",
+    "date": "2025-09-01",
+    "tickets": ["AW-1234", "AW-5678"]
+  },
+  {
+    "branch": "main",
+    "title": "v2.0.5",
+    "date": "2025-08-28",
+    "tickets": ["AW-1100", "AW-1101"]
+  },
+  {
+    "branch": "stage",
+    "title": "v2.1.0-rc.2",
+    "date": "2025-08-30",
+    "tickets": ["AW-1234", "AW-5678", "AW-5679"]
+  },
+  {
+    "branch": "stage",
+    "title": "v2.1.0-rc.1",
+    "date": "2025-08-25",
+    "tickets": ["AW-1200", "AW-1201"]
+  },
+  {
+    "branch": "dev",
+    "title": "v2.2.0-dev.5",
+    "date": "2025-09-02",
+    "tickets": ["AW-1300", "AW-1301", "AW-1302"]
+  },
+  {
+    "branch": "dev",
+    "title": "v2.2.0-dev.4",
+    "date": "2025-09-01",
+    "tickets": ["AW-1250"]
+  },
+  {
+    "branch": "dev",
+    "title": "v2.2.0-dev.3",
+    "date": "2025-08-31",
+    "tickets": ["AW-1240", "AW-1241"]
+  }
+]

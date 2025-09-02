@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { ParsedRelease, BranchType } from '@/types/release';
-import { GitHubService } from '@/services/github';
+import { ReleasesService } from '@/services/releases';
 import { BranchColumn } from './BranchColumn';
-import { Settings, RefreshCw, Github, AlertCircle } from 'lucide-react';
+import { RefreshCw, FileText, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 
-export const GitHubDashboard = () => {
+const releasesService = new ReleasesService();
+
+export const ReleasesDashboard = () => {
   const [releases, setReleases] = useState<Record<BranchType, ParsedRelease[]>>({
     dev: [],
     stage: [],
@@ -16,17 +17,13 @@ export const GitHubDashboard = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [githubService, setGithubService] = useState(new GitHubService('example', 'example'));
-  const [showSettings, setShowSettings] = useState(false);
-  const [owner, setOwner] = useState('example');
-  const [repo, setRepo] = useState('example');
 
   const fetchReleases = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const fetchedReleases = await githubService.fetchReleases();
-      const categorized = githubService.categorizeByBranch(fetchedReleases);
+      const fetchedReleases = await releasesService.fetchReleases();
+      const categorized = releasesService.categorizeByBranch(fetchedReleases);
       setReleases(categorized);
       toast({
         title: "Success",
@@ -45,18 +42,9 @@ export const GitHubDashboard = () => {
     }
   };
 
-  const handleUpdateSettings = () => {
-    setGithubService(new GitHubService(owner, repo));
-    setShowSettings(false);
-    toast({
-      title: "Settings Updated",
-      description: `Now tracking ${owner}/${repo}`,
-    });
-  };
-
   useEffect(() => {
     fetchReleases();
-  }, [githubService]);
+  }, []);
 
   const totalReleases = Object.values(releases).flat().length;
 
@@ -68,25 +56,17 @@ export const GitHubDashboard = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary rounded-lg">
-                <Github className="w-5 h-5 text-primary-foreground" />
+                <FileText className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">Release Dashboard</h1>
                 <p className="text-sm text-muted-foreground">
-                  Tracking {owner}/{repo} • {totalReleases} releases
+                  Tracking releases from local data • {totalReleases} releases
                 </p>
               </div>
             </div>
             
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSettings(!showSettings)}
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -98,42 +78,6 @@ export const GitHubDashboard = () => {
               </Button>
             </div>
           </div>
-          
-          {showSettings && (
-            <Card className="mt-4">
-              <CardContent className="p-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-1 block">
-                      Owner
-                    </label>
-                    <Input
-                      value={owner}
-                      onChange={(e) => setOwner(e.target.value)}
-                      placeholder="e.g. facebook"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-1 block">
-                      Repository
-                    </label>
-                    <Input
-                      value={repo}
-                      onChange={(e) => setRepo(e.target.value)}
-                      placeholder="e.g. react"
-                    />
-                  </div>
-                </div>
-                <Button 
-                  onClick={handleUpdateSettings}
-                  className="mt-4"
-                  size="sm"
-                >
-                  Update Repository
-                </Button>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
 
@@ -148,7 +92,7 @@ export const GitHubDashboard = () => {
                   <h3 className="font-semibold text-destructive">Error Loading Releases</h3>
                   <p className="text-sm text-muted-foreground mt-1">{error}</p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Make sure the repository exists and is public, or check your internet connection.
+                    Make sure the releases.json file exists in the public directory.
                   </p>
                 </div>
               </div>
