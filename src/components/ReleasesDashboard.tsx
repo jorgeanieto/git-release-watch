@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { ParsedRelease, BranchType } from '@/types/release';
 import { ReleasesService } from '@/services/releases';
 import { BranchColumn } from './BranchColumn';
-import { RefreshCw, FileText, AlertCircle } from 'lucide-react';
+import { DiffView } from './DiffView';
+import { RefreshCw, FileText, AlertCircle, GitCompareArrows, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 
 const releasesService = new ReleasesService();
@@ -103,23 +105,42 @@ export const ReleasesDashboard = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <BranchColumn
-            branch="dev"
-            releases={releases.dev}
-            isLoading={isLoading}
-          />
-          <BranchColumn
-            branch="stage"
-            releases={releases.stage}
-            isLoading={isLoading}
-          />
-          <BranchColumn
-            branch="main"
-            releases={releases.main}
-            isLoading={isLoading}
-          />
-        </div>
+        <Tabs defaultValue="dashboard" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="diff" className="flex items-center gap-2">
+              <GitCompareArrows className="w-4 h-4" />
+              Diff View
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <BranchColumn
+                branch="dev"
+                releases={releases.dev}
+                isLoading={isLoading}
+              />
+              <BranchColumn
+                branch="stage"
+                releases={releases.stage}
+                isLoading={isLoading}
+              />
+              <BranchColumn
+                branch="main"
+                releases={releases.main}
+                isLoading={isLoading}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="diff">
+            <DiffView releases={releases} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
