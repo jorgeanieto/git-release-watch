@@ -1,35 +1,36 @@
 import { useState, useEffect } from 'react';
-import { ParsedRelease, BranchType } from '@/types/release';
-import { ReleasesService } from '@/services/releases';
-import { BranchColumn } from './BranchColumn';
-import { DiffView } from './DiffView';
-import { RefreshCw, FileText, AlertCircle, GitCompareArrows, BarChart3 } from 'lucide-react';
+import { ApiRelease } from '@/types/api';
+import { releaseRadarAPI } from '@/services/api';
+import { ReleasesTimeline } from './ReleasesTimeline';
+import { CompareView } from './CompareView';
+import { PreviewView } from './PreviewView';
+import { ClientSelector } from './ClientSelector';
+import { RefreshCw, FileText, AlertCircle, GitCompareArrows, BarChart3, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 
-const releasesService = new ReleasesService();
+// Mock clients - in a real app, this would come from an API
+const MOCK_CLIENTS = ['client-a', 'client-b', 'client-c', 'staging-env', 'production'];
 
 export const ReleasesDashboard = () => {
-  const [releases, setReleases] = useState<Record<BranchType, ParsedRelease[]>>({
-    dev: [],
-    stage: [],
-    main: []
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedClient, setSelectedClient] = useState<string | null>(null);
+  const [releases, setReleases] = useState<ApiRelease[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchReleases = async () => {
+    if (!selectedClient) return;
+
     try {
       setIsLoading(true);
       setError(null);
-      const fetchedReleases = await releasesService.fetchReleases();
-      const categorized = releasesService.categorizeByBranch(fetchedReleases);
-      setReleases(categorized);
+      const fetchedReleases = await releaseRadarAPI.getClientReleases(selectedClient);
+      setReleases(fetchedReleases);
       toast({
         title: "Success",
-        description: `Loaded ${fetchedReleases.length} releases successfully`,
+        description: `Loaded ${fetchedReleases.length} releases for ${selectedClient}`,
       });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch releases';
@@ -45,10 +46,10 @@ export const ReleasesDashboard = () => {
   };
 
   useEffect(() => {
-    fetchReleases();
-  }, []);
-
-  const totalReleases = Object.values(releases).flat().length;
+    if (selectedClient) {
+      fetchReleases();
+    }
+  }, [selectedClient]);
 
   return (
     <div className="min-h-screen">
@@ -61,19 +62,24 @@ export const ReleasesDashboard = () => {
                 <FileText className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">Release Dashboard</h1>
+                <h1 className="text-xl font-bold text-foreground">ReleaseRadar Dashboard</h1>
                 <p className="text-sm text-muted-foreground">
-                  Tracking releases from local data • {totalReleases} releases
+                  {selectedClient ? `Tracking releases for ${selectedClient} • ${releases.length} releases` : 'Select a client to view releases'}
                 </p>
               </div>
             </div>
             
             <div className="flex items-center gap-2">
+              <ClientSelector
+                clients={MOCK_CLIENTS}
+                selectedClient={selectedClient}
+                onClientSelect={setSelectedClient}
+              />
               <Button
                 variant="outline"
                 size="sm"
                 onClick={fetchReleases}
-                disabled={isLoading}
+                disabled={isLoading || !selectedClient}
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                 Refresh
@@ -105,42 +111,46 @@ export const ReleasesDashboard = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="diff" className="flex items-center gap-2">
-              <GitCompareArrows className="w-4 h-4" />
-              Diff View
-            </TabsTrigger>
-          </TabsList>
+        {!selectedClient ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">Select a Client</h3>
+              <p className="text-muted-foreground">
+                Choose a client from the dropdown above to view their releases, compare versions, and preview deployments.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Tabs defaultValue="timeline" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto">
+              <TabsTrigger value="timeline" className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Timeline
+              </TabsTrigger>
+              <TabsTrigger value="compare" className="flex items-center gap-2">
+                <GitCompareArrows className="w-4 h-4" />
+                Compare
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="flex items-center gap-2">
+                <Eye className="w-4 h-4" />
+                Preview
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="dashboard">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <BranchColumn
-                branch="dev"
-                releases={releases.dev}
-                isLoading={isLoading}
-              />
-              <BranchColumn
-                branch="stage"
-                releases={releases.stage}
-                isLoading={isLoading}
-              />
-              <BranchColumn
-                branch="main"
-                releases={releases.main}
-                isLoading={isLoading}
-              />
-            </div>
-          </TabsContent>
+            <TabsContent value="timeline">
+              <ReleasesTimeline client={selectedClient} />
+            </TabsContent>
 
-          <TabsContent value="diff">
-            <DiffView releases={releases} />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="compare">
+              <CompareView client={selectedClient} releases={releases} />
+            </TabsContent>
+
+            <TabsContent value="preview">
+              <PreviewView client={selectedClient} />
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </div>
   );
